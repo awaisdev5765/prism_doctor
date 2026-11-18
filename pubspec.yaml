@@ -1,6 +1,6 @@
 name: prism_doctor
 description: 'Design-system audit CLI for Flutter projects — hardcoded colors, magic layout numbers, deprecated material imports, with scores, grades and CI gates.'
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/awaisdev5765/prism_doctor
 issue_tracker: https://github.com/awaisdev5765/prism_doctor/issues
 

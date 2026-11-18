@@ -6,9 +6,27 @@ import 'report.dart';
 
 /// Line-based heuristic checks (fast, analyzer-free core).
 ///
+/// Any line ending with a `// prism_doctor: ignore` comment (optionally
+/// followed by a rule id) is skipped for that rule — the standard way to
+/// bless token-definition files and demo palettes.
+///
 /// The companion analyzer-powered rules live in `lints.dart` as
 /// custom_lint rules for IDE feedback; these CLI checks cover the same
 /// ground for CI audits without requiring the analyzer driver.
+
+bool _ignored(String line, String ruleId) {
+  final i = line.indexOf('// prism_doctor: ignore');
+  if (i == -1) {
+    return false;
+  }
+  final tail = line.substring(i);
+  if (!tail.contains(ruleId)) {
+    // Bare `ignore` (no rule) blesses all rules on this line.
+    return !tail.contains(': ignore ') || tail.trim() == '// prism_doctor: ignore';
+  }
+  return true;
+}
+
 const defaultChecks = <Check>[
   _HardcodedColorCheck(),
   _MagicNumberCheck(),
@@ -34,6 +52,9 @@ class _HardcodedColorCheck implements Check {
     final pattern = RegExp(r'Color\(0x[0-9a-fA-F]{8}\)');
     final lines = source.split('\n');
     for (var i = 0; i < lines.length; i++) {
+      if (_ignored(lines[i], id)) {
+        continue;
+      }
       for (final match in pattern.allMatches(lines[i])) {
         findings.add(Finding(
           file: filePath,
@@ -72,6 +93,9 @@ class _MagicNumberCheck implements Check {
     );
     final lines = source.split('\n');
     for (var i = 0; i < lines.length; i++) {
+      if (_ignored(lines[i], id)) {
+        continue;
+      }
       for (final match in pattern.allMatches(lines[i])) {
         findings.add(Finding(
           file: filePath,
@@ -103,6 +127,9 @@ class _DeprecatedMaterialImportCheck implements Check {
     final findings = <Finding>[];
     final lines = source.split('\n');
     for (var i = 0; i < lines.length; i++) {
+      if (_ignored(lines[i], id)) {
+        continue;
+      }
       if (lines[i].contains("import 'package:flutter/material.dart'")) {
         findings.add(Finding(
           file: filePath,
